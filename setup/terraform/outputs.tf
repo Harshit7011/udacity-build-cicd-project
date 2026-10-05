@@ -15,5 +15,5 @@ output "cluster_version" {
 }
 
 output "github_action_user_arn" {
-  value = "arn:aws:iam::652162098827:user/terraform-admin"
+  value = aws_iam_user.github_action_user.arn
 }

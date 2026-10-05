@@ -180,3 +180,74 @@ resource "aws_iam_role_policy_attachment" "eks_service" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
   role       = aws_iam_role.eks_cluster.name
 }
+# Worker nodes (public subnet: private subnet has no NAT, nodes must pull images)
+resource "aws_eks_node_group" "main" {
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = "main"
+  node_role_arn   = aws_iam_role.node.arn
+  subnet_ids      = [aws_subnet.public_subnet.id]
+  instance_types  = ["t3.medium"]
+
+  scaling_config {
+    desired_size = 1
+    min_size     = 1
+    max_size     = 2
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.node]
+}
+
+resource "aws_iam_role" "node" {
+  name = "eks_node_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "node" {
+  for_each = toset([
+    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
+  ])
+  policy_arn = each.value
+  role       = aws_iam_role.node.name
+}
+
+#####################
+# Github Actions user
+#####################
+resource "aws_iam_user" "github_action_user" {
+  name = "github-action-user"
+}
+
+resource "aws_iam_user_policy_attachment" "github_action_user_ecr" {
+  user       = aws_iam_user.github_action_user.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+}
+
+resource "aws_iam_user_policy" "github_action_user_eks" {
+  name = "eks-describe"
+  user = aws_iam_user.github_action_user.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["eks:DescribeCluster"]
+        Effect   = "Allow"
+        Resource = aws_eks_cluster.main.arn
+      }
+    ]
+  })
+}
