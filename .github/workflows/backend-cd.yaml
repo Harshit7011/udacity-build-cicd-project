@@ -75,7 +75,7 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: backend
+          ECR_REPOSITORY: mp-backend
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -111,7 +111,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           cd k8s
-          kustomize edit set image backend=$ECR_REGISTRY/backend:$IMAGE_TAG
+          kustomize edit set image backend=$ECR_REGISTRY/mp-backend:$IMAGE_TAG
           kustomize build . | kubectl apply -f -
           kubectl rollout status deployment/backend -n default --timeout=600s
           echo "=== Backend Deployment Successful ==="
