@@ -1,0 +1,13 @@
+node_modules
+.pytest_cache
+.terraform
+.terraform.tfstate.lock.info
+*.tfstate.backup
+credentials
+.pytest_cachesetup/terraform/terraform.exe 
+setup/terraform/.terraform/ 
+setup/terraform/*.tfstate 
+setup/terraform/*.tfstate.* 
+setup/terraform/terraform.exe
+setup/terraform/*.tfstate*
+__pycache__/
