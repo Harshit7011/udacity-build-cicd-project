@@ -116,3 +116,9 @@ jobs:
           kubectl rollout status deployment/backend -n default --timeout=600s
           echo "=== Backend Deployment Successful ==="
           kubectl get svc backend -n default
+      - name: Show cluster state on failure
+        if: failure()
+        run: |
+          kubectl get nodes -o wide
+          kubectl get pods -o wide
+          kubectl describe pods -l app=backend | tail -40

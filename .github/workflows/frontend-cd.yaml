@@ -111,3 +111,9 @@ jobs:
           kustomize edit set image frontend=$ECR_REGISTRY/mp-frontend:$IMAGE_TAG
           kustomize build . | kubectl apply -f -
           kubectl rollout status deployment/frontend -n default --timeout=180s
+      - name: Show cluster state on failure
+        if: failure()
+        run: |
+          kubectl get nodes -o wide
+          kubectl get pods -o wide
+          kubectl describe pods -l app=frontend | tail -40
